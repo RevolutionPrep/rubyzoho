@@ -45,6 +45,15 @@ module CrudMethods
       find(id)
     end
 
+    def convert_lead(object_attribute_hash)
+      raise(RuntimeError, 'Can only call convert on a Lead') if module_name != 'Leads'
+      raise(RuntimeError, 'No ID found', object_attribute_hash.to_s) if object_attribute_hash[:id].nil?
+
+      id = object_attribute_hash.delete(:id)
+      response = RubyZoho.configuration.api.convert_lead(id, object_attribute_hash)
+      new(object_attribute_hash.merge!(response))
+    end
+
   end
 
   def attach_file(file_path, file_name)

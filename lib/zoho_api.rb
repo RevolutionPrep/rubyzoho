@@ -163,6 +163,24 @@ module ZohoApi
       check_for_errors(r)
     end
 
+    def convert_lead(id, object_attribute_hash)
+      x = REXML::Document.new
+      contacts = x.add_element 'Potentials'
+      row = contacts.add_element 'row', {'no' => '1'}
+      object_attribute_hash.each_pair { |k, v| add_field(row, k, v, 'Leads') }
+      r = self.class.post(create_url('Leads', 'convertLead'),
+                          :query => {:newFormat => 1, :authtoken => @auth_token,
+                           :scope => 'crmapi', :leadId => id,
+                           :xmlData => x, :wfTrigger => 'true'},
+                           :headers => {'Content-length' => '0'})
+      check_for_errors(r)
+      begin
+        {module_name: '', contact_id: r["success"]["Contact"]["__content__"], account_id: r["success"]["Account"]["__content__"]}
+      rescue Exception => e
+        {}
+      end
+    end
+
     def update_record(module_name, id, fields_values_hash)
       x = REXML::Document.new
       contacts = x.add_element module_name
