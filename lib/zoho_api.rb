@@ -248,7 +248,11 @@ module ZohoApi
           'Events' => %w(eventid),
           'Notes' => %w(notesid)
       }
-      valid_relationships[module_name].index(field.downcase)
+      if valid_relationships[module_name]
+        valid_relationships[module_name].index(field.downcase)
+      else
+        nil
+      end
     end
 
   end
