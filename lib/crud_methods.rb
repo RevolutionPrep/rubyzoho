@@ -29,6 +29,10 @@ module CrudMethods
       RubyZoho.configuration.api.delete_record(self.module_name, id)
     end
 
+    def mass_update(changes)
+      r = RubyZoho.configuration.api.mass_update_records(self.module_name, changes)
+    end
+
     def update(object_attribute_hash)
       raise(RuntimeError, 'No ID found', object_attribute_hash.to_s) if object_attribute_hash[:id].nil?
       id = object_attribute_hash[:id]

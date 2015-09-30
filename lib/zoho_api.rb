@@ -182,6 +182,38 @@ module ZohoApi
       end
     end
 
+    def mass_update_records(module_name, changes)
+      x = REXML::Document.new
+      xml_container = x.add_element module_name
+      changes.each_with_index do |change_hash, index|
+        row = xml_container.add_element 'row', {'no' => (index + 1)}
+        change_hash.each_pair { |k, v| add_field(row, k, v, module_name) }
+      end
+      r = self.class.post(create_url(module_name, 'insertRecords'),
+                          :query => {:newFormat => 1, :authtoken => @auth_token,
+                                     :scope => 'crmapi', :duplicateCheck => 1, :version => 4,
+                                     :xmlData => x, :wfTrigger => 'true'},
+                          :headers => {'Content-length' => '0'})
+      json = Hash.from_xml(REXML::Document.new(r.body).to_s).deep_symbolize_keys
+      response = json[:response][:result][:row].collect do |row|
+        result = case row[:success][:code]
+                 when '2000' then 'insert'
+                 when '2001' then 'update'
+                 when '2002' then 'duplicate'
+                 else 'unknown'
+                 end
+        {
+          row: row[:no].to_i,
+          internal_id: changes[row[:no].to_i - 1][:internal_id],
+          module_name: module_name,
+          action: result,
+          code: row[:success][:code],
+          id: row[:success][:details][:FL].first
+        }
+      end
+      response
+    end
+
     def update_record(module_name, id, fields_values_hash)
       x = REXML::Document.new
       contacts = x.add_element module_name
