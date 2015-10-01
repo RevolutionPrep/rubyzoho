@@ -191,11 +191,13 @@ module ZohoApi
       end
       r = self.class.post(create_url(module_name, 'insertRecords'),
                           :query => {:newFormat => 1, :authtoken => @auth_token,
-                                     :scope => 'crmapi', :duplicateCheck => 1, :version => 4,
+                                     :scope => 'crmapi', :duplicateCheck => 2, :version => 4,
                                      :xmlData => x, :wfTrigger => 'true'},
                           :headers => {'Content-length' => '0'})
       json = Hash.from_xml(REXML::Document.new(r.body).to_s).deep_symbolize_keys
-      response = json[:response][:result][:row].collect do |row|
+      response = json[:response][:result][:row]
+      response = [response] if response.is_a?(Hash)
+      response.collect do |row|
         result = case row[:success][:code]
                  when '2000' then 'insert'
                  when '2001' then 'update'

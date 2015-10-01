@@ -30,7 +30,7 @@ module CrudMethods
     end
 
     def mass_update(changes)
-      r = RubyZoho.configuration.api.mass_update_records(self.module_name, changes)
+      RubyZoho.configuration.api.mass_update_records(self.module_name, changes)
     end
 
     def update(object_attribute_hash)
