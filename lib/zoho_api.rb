@@ -115,7 +115,8 @@ module ZohoApi
       fn = field_name.class == String ? field_name : field_name.to_s
       return true if fn == 'id'
       return true if %w[Calls Events Tasks].index(module_name) && fn.downcase == 'activityid'
-      fn.downcase.gsub('id', '') == module_name.chop.downcase
+      modified_module_name = module_name.include?("CustomModule") ? module_name.downcase : module_name.chop.downcase
+      fn.downcase.gsub('id', '') == modified_module_name
     end
 
     def related_id?(module_name, field_name)
