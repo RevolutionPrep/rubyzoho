@@ -131,9 +131,20 @@ module ZohoApi
       r = self.class.get(create_url("#{related_module}", 'getRelatedRecords'),
                          :query => {:newFormat => 1, :authtoken => @auth_token, :scope => 'crmapi',
                                     :parentModule => parent_module, :id => parent_record_id})
-
-      x = REXML::Document.new(r.body).elements.to_a("/response/result/#{parent_module}/row")
       check_for_errors(r)
+      begin
+        results = r["response"]["result"]["Tasks"]["row"]
+        records = results.collect do |row|
+          hash = {}
+          row["FL"].each do |field|
+            hash[field['val']] = field['__content__']
+          end
+          hash
+        end
+        records
+      rescue Exception => e
+        []
+      end
     end
 
     def some(module_name, index = 1, number_of_records = nil, sort_column = :id, sort_order = :asc, last_modified_time = nil)
@@ -217,7 +228,7 @@ module ZohoApi
       response
     end
 
-    def update_record(module_name, id, fields_values_hash)
+    def update_record(module_name, id, fields_values_hash, wfTrigger = true)
       x = REXML::Document.new
       contacts = x.add_element module_name
       row = contacts.add_element 'row', {'no' => '1'}
@@ -225,7 +236,7 @@ module ZohoApi
       r = self.class.post(create_url(module_name, 'updateRecords'),
                           :query => {:newFormat => 1, :authtoken => @auth_token,
                                      :scope => 'crmapi', :id => id,
-                                     :xmlData => x, :wfTrigger => 'true'},
+                                     :xmlData => x, :wfTrigger => wfTrigger},
                           :headers => {'Content-length' => '0'})
       check_for_errors(r)
       x_r = REXML::Document.new(r.body).elements.to_a('//recorddetail')

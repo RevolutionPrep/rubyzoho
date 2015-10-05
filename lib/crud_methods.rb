@@ -33,11 +33,16 @@ module CrudMethods
       RubyZoho.configuration.api.mass_update_records(self.module_name, changes)
     end
 
-    def update(object_attribute_hash)
+    def related(id, related_module)
+      RubyZoho.configuration.api.related_records(self.module_name, id, related_module)
+    end
+
+    def update(object_attribute_hash, wfTrigger = true)
+      # wfTrigger will trigger workflow rules if true
       raise(RuntimeError, 'No ID found', object_attribute_hash.to_s) if object_attribute_hash[:id].nil?
       id = object_attribute_hash[:id]
       object_attribute_hash.delete(:id)
-      r = RubyZoho.configuration.api.update_record(self.module_name, id, object_attribute_hash)
+      r = RubyZoho.configuration.api.update_record(self.module_name, id, object_attribute_hash, wfTrigger)
       new(object_attribute_hash.merge!(r))
     end
 
