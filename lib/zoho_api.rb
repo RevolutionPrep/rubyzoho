@@ -206,27 +206,35 @@ module ZohoApi
                                      :scope => 'crmapi', :duplicateCheck => 2, :version => 4,
                                      :xmlData => x, :wfTrigger => 'true'},
                           :headers => {'Content-length' => '0'})
-      json = Hash.from_xml(REXML::Document.new(r.body).to_s).deep_symbolize_keys
-      response = json[:response][:result][:row]
-      response = [response] if response.is_a?(Hash)
+      begin
+        json = Hash.from_xml(REXML::Document.new(r.body).to_s).deep_symbolize_keys
+        response = json[:response][:result][:row]
+        response = [response] if response.is_a?(Hash)
 
-      results = response.collect do |row|
-        result = case (row[:success][:code] rescue '')
-                 when '2000' then 'insert'
-                 when '2001' then 'update'
-                 when '2002' then 'duplicate'
-                 else 'unknown'
-                 end
-        {
-          row: row[:no].to_i,
-          internal_id: changes[row[:no].to_i - 1][:internal_id],
-          module_name: module_name,
-          action: result,
-          code: (row[:success][:code] rescue 'error'),
-          id: (row[:success][:details][:FL].first rescue nil)
-        }
+        results = response.collect do |row|
+          result = case (row[:success][:code] rescue '')
+                   when '2000' then 'insert'
+                   when '2001' then 'update'
+                   when '2002' then 'duplicate'
+                   else 'unknown'
+                   end
+          {
+            row: row[:no].to_i,
+            internal_id: changes[row[:no].to_i - 1][:internal_id],
+            module_name: module_name,
+            action: result,
+            code: (row[:success][:code] rescue 'error'),
+            id: (row[:success][:details][:FL].first rescue nil)
+          }
+        end
+        results
+      rescue Exception => e
+        if code = (r["response"]["error"]["code"] rescue false)
+          raise(RuntimeError, "Zoho Error Code #{code}: #{r["response"]["error"]["messsage"]}")
+        else
+          raise(RuntimeError, "Zoho Error: #{e.message}")
+        end
       end
-      results
     end
 
     def update_record(module_name, id, fields_values_hash, wfTrigger = true)
