@@ -209,8 +209,9 @@ module ZohoApi
       json = Hash.from_xml(REXML::Document.new(r.body).to_s).deep_symbolize_keys
       response = json[:response][:result][:row]
       response = [response] if response.is_a?(Hash)
-      response.collect do |row|
-        result = case row[:success][:code]
+
+      results = response.collect do |row|
+        result = case (row[:success][:code] rescue '')
                  when '2000' then 'insert'
                  when '2001' then 'update'
                  when '2002' then 'duplicate'
@@ -221,11 +222,11 @@ module ZohoApi
           internal_id: changes[row[:no].to_i - 1][:internal_id],
           module_name: module_name,
           action: result,
-          code: row[:success][:code],
-          id: row[:success][:details][:FL].first
+          code: (row[:success][:code] rescue 'error'),
+          id: (row[:success][:details][:FL].first rescue nil)
         }
       end
-      response
+      results
     end
 
     def update_record(module_name, id, fields_values_hash, wfTrigger = true)
