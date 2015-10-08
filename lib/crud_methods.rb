@@ -29,6 +29,10 @@ module CrudMethods
       RubyZoho.configuration.api.delete_record(self.module_name, id)
     end
 
+    def mass_insert(changes)
+      RubyZoho.configuration.api.mass_insert_records(self.module_name, changes)
+    end
+
     def mass_update(changes)
       RubyZoho.configuration.api.mass_update_records(self.module_name, changes)
     end
